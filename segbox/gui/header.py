@@ -9,9 +9,9 @@ class Header(QtWidgets.QMainWindow):
         mw.setWindowTitle('SegBox')
 
         screen = app.primaryScreen()
-        width = int(QtCore.QRect.width(screen.availableGeometry()))
-        height = int(QtCore.QRect.height(screen.availableGeometry()))
-        mw.setGeometry(width / 6, height / 8, width / 1.7, height / 1.3)  # define main window size
+        self.width = int(QtCore.QRect.width(screen.availableGeometry()))
+        self.height = int(QtCore.QRect.height(screen.availableGeometry()))
+        mw.setGeometry(self.width / 6, self.height / 8, self.width / 1.7, self.height / 1.3)  # define main window size
 
         # self.icon = QtGui.QIcon(APP_ICON)
         # mw.setWindowIcon(self.icon)
