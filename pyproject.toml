@@ -1,0 +1,29 @@
+[tool.poetry]
+name = "segbox"
+version = "0.1.0"
+description = ""
+authors = ["melandur <account@qunit.ch>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = ">=3.10.9,<3.12"
+numpy = "^1.24.2"
+pillow = "^9.5.0"
+nibabel = "^5.1.0"
+black = "^23.3.0"
+isort = "^5.12.0"
+pyside6 = "^6.5.0"
+qdarkstyle = "^3.1"
+loguru = "^0.7.0"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+
+[tool.isort]
+profile = "black"
+
+[tool.black]
+line-length = 120
