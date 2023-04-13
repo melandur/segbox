@@ -1,4 +1,5 @@
 from PySide6 import QtCore, QtWidgets, QtGui
+from PySide6.QtCore import Slot
 import qimage2ndarray
 from segbox.core import DataHandler
 from segbox.gui.header import Header
@@ -11,37 +12,40 @@ class MainWindow(QtWidgets.QMainWindow):
     def __init__(self, app):
         super().__init__()
 
+        self.num = [0]
         self.data_handler = DataHandler()
-
         self.header = Header(self, app)
+        self.init_layout()
 
+    def init_layout(self):
+        """Initialize the main window"""
         self.widget = QtWidgets.QWidget()
         self.setCentralWidget(self.widget)
 
         v_box = QtWidgets.QVBoxLayout()
-        h_box = QtWidgets.QHBoxLayout()
-        h_box.setAlignment(QtCore.Qt.AlignLeft)
+        self.h_box = QtWidgets.QHBoxLayout()
+        self.h_box.setAlignment(QtCore.Qt.AlignLeft)
 
-        # variables
+        self.init_buttons()
+
+        self.h_box.addWidget(self.btn_add)
+
+        v_box.addLayout(self.h_box)
+        v_box.addWidget(self.pix)
+        self.widget.setLayout(v_box)
+
+    def init_buttons(self):
+        """Initialize buttons"""
         self.pix = QtWidgets.QLabel('No file selected')
         self.pix.setAlignment(QtCore.Qt.AlignCenter)
         self.pix.mousePressEvent = self.get_mouse_postion
 
-        # file browser button
-        file_browser_btn = QtWidgets.QPushButton('Load files ...')
-        file_browser_btn1 = QtWidgets.QPushButton('Load files ...')
+        self.btn_add = QtWidgets.QPushButton('Load files ...')
+        self.btn_add.setObjectName(f'btn_add_{self.num[-1]}')
 
-        file_browser_btn.setFixedWidth(150)
-        file_browser_btn1.setFixedWidth(150)
+        self.btn_add.setFixedWidth(100)
 
-        file_browser_btn.clicked.connect(self.open_file_dialog)
-
-        # add widgets to layout
-        h_box.addWidget(file_browser_btn)
-        h_box.addWidget(file_browser_btn1)
-        v_box.addLayout(h_box)
-        v_box.addWidget(self.pix)
-        self.widget.setLayout(v_box)
+        self.btn_add.clicked.connect(self.add_frame)
 
     def open_file_dialog(self):
         """Open file dialog and add selected files to list"""
@@ -56,15 +60,44 @@ class MainWindow(QtWidgets.QMainWindow):
                 self.data_handler(filenames[0])
                 img_arr = self.data_handler.get_array()
 
-                # convert numpy array to QImage
                 q_img = qimage2ndarray.array2qimage(img_arr)
                 q_pix = QtGui.QPixmap.fromImage(q_img)
-                q_pix = q_pix.scaled(
-                    int(self.header.width * 0.6),
-                    int(self.header.height * 0.6),
-                    QtCore.Qt.KeepAspectRatio,
-                )
+                q_pix = self.resize_image(q_pix)
+
                 self.pix.setPixmap(q_pix)
+
+    def resize_image(self, q_pix):
+        """Resize image to fit in the window"""
+        return q_pix.scaled(int(self.header.width * 0.6), int(self.header.height * 0.6), QtCore.Qt.KeepAspectRatio)
+
+    @Slot()
+    def add_frame(self):
+        self.num.append(self.num[-1] + 1)
+        print(self.num)
+        btn_add = QtWidgets.QPushButton('Load file...', self)
+        btn_remove = QtWidgets.QPushButton('Remove', self)
+        btn_add.setObjectName(f'btn_add_{self.num[-1]}')
+        btn_remove.setObjectName(f'btn_remove_{self.num[-1]}')
+        btn_add.clicked.connect(self.add_frame)
+        btn_remove.clicked.connect(self.remove_frame)
+        self.h_box.addWidget(btn_add)
+        self.h_box.addWidget(btn_remove)
+
+    @Slot()
+    def remove_frame(self):
+        print(self.num)
+        if len(self.num) >= 2:
+            num = self.num[-1]
+
+            btn_add = self.findChild(QtWidgets.QPushButton, f'btn_add_{num}')
+            btn_remove = self.findChild(QtWidgets.QPushButton, f'btn_remove_{num}')
+            if btn_add:
+                self.h_box.removeWidget(btn_add)
+                btn_add.deleteLater()
+            if btn_remove:
+                self.h_box.removeWidget(btn_remove)
+                btn_remove.deleteLater()
+            self.num.pop()
 
     def get_mouse_postion(self, event):
         x = event.pos().x()
