@@ -1,7 +1,7 @@
 import sys
 
 # import qdarktheme
-from PySide6 import QtWidgets
+from PyQt5 import QtWidgets
 
 from segbox.gui.main_window import MainWindow
 
