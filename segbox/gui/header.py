@@ -1,4 +1,4 @@
-from PySide6 import QtGui, QtWidgets, QtCore
+from PySide6 import QtCore, QtWidgets
 
 
 class Header(QtWidgets.QMainWindow):
@@ -6,7 +6,7 @@ class Header(QtWidgets.QMainWindow):
 
     def __init__(self, mw, app):
         super().__init__()
-        mw.setWindowTitle('SegBox')
+        mw.setWindowTitle("SegBox")
 
         screen = app.primaryScreen()
         self.width = int(QtCore.QRect.width(screen.availableGeometry()))
