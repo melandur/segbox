@@ -1,7 +1,7 @@
 from loguru import logger
 from PyQt5 import QtCore
 
-from segbox.core.data_manager import DataAnalyzer, DataHandler, DataReader
+from segbox.core.data_manager import DataHandler, DataReader
 from segbox.core.user import UserSpecsDetector
 from segbox.gui.viewers import InitViewerStats, SyncViewerStats
 

@@ -10,7 +10,6 @@ class ViewerQLabel(QtWidgets.QLabel):
         self.setAlignment(QtCore.Qt.AlignCenter)
         self.setAcceptDrops(True)
         self.setScaledContents(False)
-        # self.setStyleSheet('QLabel {background : black;}')
         self.setMinimumSize(100, 100)
         self.setContextMenuPolicy(QtCore.Qt.PreventContextMenu)
 

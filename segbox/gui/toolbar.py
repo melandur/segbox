@@ -53,9 +53,7 @@ class Toolbar(QtWidgets.QMainWindow):
         if dialog.exec():
             filenames = dialog.selectedFiles()
             if len(filenames) == 1:
-                return True, filenames[0]
-            return False, None
-        return False, None
+                self.mw.core.data_reader(filenames[0], sender_index)
 
 
 # From here on the icons are on the right side of the toolbar

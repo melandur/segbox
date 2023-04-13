@@ -1,26 +1,24 @@
 SUPPORTED_IMAGE_FILE_TYPES = [
-    '.nii',
-    '.mha',
-    '.mhd',
-    '.hdr',
-    '.img',
-    '.nrrd',
-    '.nhdr',
-    '.vtk',
+    'jpg',
+    'jpeg',
+    'bmp',
+    'tif',
+    'tiff',
 ]
+
+SUPPORTED_MED_IMAGE_FILE_TYPES = [
+    'nii.gz',
+    'nii',
+    'mha',
+    'mhd',
+    'hdr',
+    'img',
+    'nrrd',
+    'nhdr',
+    'vtk',
+]
+
 SUPPORTED_DICOM_FILE_TYPES = [
-    '.dicom',
-    '.dcm',
-]
-SUPPORTED_EXPORT_FILE_TYPES = [
-    '.nii',
-    '.nii.gz',
-    '.mha',
-    '.mhd',
-    '.hdr',
-    '.img',
-    '.img.gz',
-    '.nrrd',
-    '.nhdr',
-    '.vtk',
+    'dicom',
+    'dcm',
 ]

@@ -1,6 +1,6 @@
 import numpy as np
 from loguru import logger
-from PyQt5 import QtGui, QtWidgets
+from PyQt5 import QtWidgets
 
 
 class ViewerUpdater(QtWidgets.QMainWindow):
