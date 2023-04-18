@@ -45,7 +45,6 @@ listener.start()
 
 
 def check_files():
-    # files = os.listdir(data_folder)
     if state.count_images > 6:
         ui.notify('Currently only 6 files are supported, choose again')
         shutil.rmtree(state.data_folder)
@@ -60,23 +59,25 @@ async def pick_file() -> None:
             file_name = os.path.basename(result)
             new_path = f'{state.data_folder}{os.sep}{file_name}'
             copy(result, new_path)
-            check_files()
-            image_viewers()
+            # ui.update(state.data_folder)
+
+            # check_files()
+            # image_viewers()
 
 
 def mouse_handler(event: MouseEventArguments) -> None:
     if event.type == 'mousedown':
-        image_1.content += f'<circle cx="{event.image_x}" cy="{event.image_y}" r="{state.radius}" fill="{state.color}" />'
-        if image_2:
-            image_2.content += f'<circle cx="{event.image_x}" cy="{event.image_y}" r="{state.radius}" fill="{state.color}" />'
-        if image_3:
-            image_3.content += f'<circle cx="{event.image_x}" cy="{event.image_y}" r="{state.radius}" fill="{state.color}" />'
-        if image_4:
-            image_4.content += f'<circle cx="{event.image_x}" cy="{event.image_y}" r="{state.radius}" fill="{state.color}" />'
-        if image_5:
-            image_5.content += f'<circle cx="{event.image_x}" cy="{event.image_y}" r="{state.radius}" fill="{state.color}" />'
-        if image_6:
-            image_6.content += f'<circle cx="{event.image_x}" cy="{event.image_y}" r="{state.radius}" fill="{state.color}" />'
+        container_1.image_1.content += f'<circle cx="{event.image_x}" cy="{event.image_y}" r="{state.radius}" fill="{state.color}" />'
+        if container_1.image_2:
+            container_1.image_2.content += f'<circle cx="{event.image_x}" cy="{event.image_y}" r="{state.radius}" fill="{state.color}" />'
+        if container_1.image_3:
+            container_1.image_3.content += f'<circle cx="{event.image_x}" cy="{event.image_y}" r="{state.radius}" fill="{state.color}" />'
+        if container_2.image_4:
+            container_2.image_4.content += f'<circle cx="{event.image_x}" cy="{event.image_y}" r="{state.radius}" fill="{state.color}" />'
+        if container_2.image_5:
+            container_2.image_5.content += f'<circle cx="{event.image_x}" cy="{event.image_y}" r="{state.radius}" fill="{state.color}" />'
+        if container_2.image_6:
+            container_2.image_6.content += f'<circle cx="{event.image_x}" cy="{event.image_y}" r="{state.radius}" fill="{state.color}" />'
     if event.type == 'mouseover':
         state.on_image = True
     if event.type == 'mouseout':
@@ -94,68 +95,72 @@ def mouse_handler(event: MouseEventArguments) -> None:
 #         slide.set_source(f'slides/{files[index]}')
 
 
+
 def handle_shutdown():
     if os.path.exists(f'{state.data_folder}{os.sep}slides'):
         print('slides folder exists')
 
 
-"""APP"""
-ui.label('CONTENT')
+class Container_1:
+    def __init__(self):
+        self.image_1 = ui.interactive_image(f'static/1x1.png', on_mouse=mouse_handler, events=['mouseover', 'mouseout', 'mousedown'], cross=True).style(f'width: 30%')
+        self.image_2 = ui.interactive_image(f'static/1x1.png', on_mouse=mouse_handler, events=['mouseover', 'mouseout', 'mousedown'], cross=True).style(f'width: 30%')
+        self.image_3 = ui.interactive_image(f'static/1x1.png', on_mouse=mouse_handler, events=['mouseover', 'mouseout', 'mousedown'], cross=True).style(f'width: 30%')
 
-container_1 = ui.row()
-container_2 = ui.row()
 
-with container_1.style('width: 100%'):
-    image_1 = ui.interactive_image(
-        f'static/1x1.png', on_mouse=mouse_handler, events=['mouseover', 'mouseout', 'mousedown'], cross=True
-    ).style(f'width: 30%')
-    image_2 = ui.interactive_image(
-        f'static/1x1.png', on_mouse=mouse_handler, events=['mouseover', 'mouseout', 'mousedown'], cross=True
-    ).style(f'width: 30%')
-    image_3 = ui.interactive_image(
-        f'static/1x1.png', on_mouse=mouse_handler, events=['mouseover', 'mouseout', 'mousedown'], cross=True
-    ).style(f'width: 30%')
+class Container_2:
+    def __init__(self):
 
-with container_2.style('width: 100%'):
-    image_4 = ui.interactive_image(
-        f'static/1x1.png', on_mouse=mouse_handler, events=['mouseover', 'mouseout', 'mousedown'], cross=True
-    ).style(f'width: 30%')
-    image_5 = ui.interactive_image(
-        f'static/1x1.png', on_mouse=mouse_handler, events=['mouseover', 'mouseout', 'mousedown'], cross=True
-    ).style(f'width: 30%')
-    image_6 = ui.interactive_image(
-        f'static/1x1.png', on_mouse=mouse_handler, events=['mouseover', 'mouseout', 'mousedown'], cross=True
-    ).style(f'width: 30%')
+        self.image_4 = ui.interactive_image(f'static/1x1.png', on_mouse=mouse_handler, events=['mouseover', 'mouseout', 'mousedown'], cross=True).style(f'width: 30%')
+        self.image_5 = ui.interactive_image(f'static/1x1.png', on_mouse=mouse_handler, events=['mouseover', 'mouseout', 'mousedown'], cross=True).style(f'width: 30%')
+        self.image_6 = ui.interactive_image(f'static/1x1.png', on_mouse=mouse_handler, events=['mouseover', 'mouseout', 'mousedown'], cross=True).style(f'width: 30%')
+
+
+with ui.row():
+    container_1 = Container_1()
+
+with ui.row():
+    container_2 = Container_2()
 
 
 def image_viewers():
+    state.files = sorted(f.name for f in state.data_folder.glob('*'))
     if state.count_images:
         if state.count_images > 3:
             width = int(95 / 3)
         else:
             width = int(95 / state.count_images)
 
-        with container_1.style('width: 100%'):
+        with ui.row().style('width: 100%'):
             if state.count_images >= 1:
-                image_1.set_source(f'data/{state.images[0]}')
-                image_1.style(f'width: {width}%')
+                container_1.image_1.set_source(f'data/{state.images[0]}')
+                container_1.image_1.style(f'width: {width}%')
             if state.count_images >= 2:
-                image_2.set_source(f'data/{state.images[1]}')
-                image_2.style(f'width: {width}%')
+                container_1.image_2.set_source(f'data/{state.images[1]}')
+                container_1.image_2.style(f'width: {width}%')
             if state.count_images >= 3:
-                image_3.set_source(f'data/{state.images[2]}')
-                image_3.style(f'width: {width}%')
+                container_1.image_3.set_source(f'data/{state.images[2]}')
+                container_1.image_3.style(f'width: {width}%')
 
-        with container_2.style('width: 100%'):
+        with ui.row().style('width: 100%'):
             if state.count_images >= 4:
-                image_4.set_source(f'data/{state.images[3]}')
-                image_4.style(f'width: {width}%')
+                container_2.image_4.set_source(f'data/{state.images[3]}')
+                container_2.image_4.style(f'width: {width}%')
             if state.count_images >= 5:
-                image_5.set_source(f'data/{state.images[4]}')
-                image_5.style(f'width: {width}%')
+                container_2.image_5.set_source(f'data/{state.images[4]}')
+                container_2.image_5.style(f'width: {width}%')
             if state.count_images >= 6:
-                image_6.set_source(f'data/{state.images[5]}')
-                image_6.style(f'width: {width}%')
+                container_2.image_6.set_source(f'data/{state.images[5]}')
+                container_2.image_6.style(f'width: {width}%')
+
+def reset():
+    ui.update( container_1.image_1)
+    container_1.image_1.clear()
+    container_1.image_2.clear()
+    container_1.image_3.clear()
+    container_2.image_4.clear()
+    container_2.image_5.clear()
+    container_2.image_6.clear()
 
 
 with ui.header(elevated=True).style('background-color: #3874c8').classes('items-center justify-between'):
@@ -167,6 +172,7 @@ with ui.left_drawer(fixed=False).style('background-color: #ebf1fa').props('borde
     color_input = ui.color_input(label='Color', value='#000000').bind_value(state, 'color').style('margin-top: 15px')
     ui.button('Choose files', on_click=pick_file).props('icon=folder').style('margin-top: 30px')
     ui.button('Show images', on_click=image_viewers).props('icon=camera').style('margin-top: 15px')
+    ui.button('Reset', on_click=reset).props('icon=delete').style('margin-top: 15px')
 
 with ui.footer().style('background-color: #3874c8'):
     ui.label('MIA Lab - ARTORG - University of Bern')
