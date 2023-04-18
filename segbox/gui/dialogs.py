@@ -80,10 +80,8 @@ def restart_application_pop_up(widget, mw, text):
     msg.move(QtWidgets.QDesktopWidget().availableGeometry().center() - msg.frameGeometry().center())
     msg.exec_()
 
-
-
-            # self.data_handler(filenames[0], sender_index)
-            # self.auto()
+    # self.data_handler(filenames[0], sender_index)
+    # self.auto()
 
     # # last_visited_folder = core.path_master.get_last_visited_folder()
     # dialog = QtWidgets.QFileDialog()

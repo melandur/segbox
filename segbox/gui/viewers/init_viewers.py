@@ -2,10 +2,7 @@ from PyQt5 import QtCore, QtWidgets
 
 from segbox.core.utils import dirname, isdir, isfile
 from segbox.gui.dialogs import pop_up_window
-from segbox.gui.viewers.custom_view import (
-    CustomQDockWidget,
-    ViewerQLabel,
-)
+from segbox.gui.viewers.custom_view import CustomQDockWidget, ViewerQLabel
 
 
 class InitViewers:

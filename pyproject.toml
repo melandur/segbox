@@ -20,6 +20,9 @@ psutil = "^5.9.4"
 simpleitk = "^2.2.1"
 torch = "^2.0.0"
 pyqt5 = "5.15.0"
+nicegui = "^1.2.6"
+pynput = "^1.7.6"
+justpy = "^0.13.0"
 
 
 [build-system]

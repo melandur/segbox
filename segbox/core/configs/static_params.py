@@ -4,6 +4,7 @@ SUPPORTED_IMAGE_FILE_TYPES = [
     'bmp',
     'tif',
     'tiff',
+    'png',
 ]
 
 SUPPORTED_MED_IMAGE_FILE_TYPES = [

@@ -1,9 +1,8 @@
 import platform
 import typing as t
 
-
-import torch
 import psutil
+import torch
 from loguru import logger
 from PyQt5 import QtCore
 

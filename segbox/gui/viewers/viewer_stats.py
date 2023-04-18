@@ -6,7 +6,6 @@ from PyQt5 import QtGui
 
 class ViewerStats:
     def __init__(self):
-
         logger.debug(f'Run {self.__class__.__name__}')
         self._title = ''
         self.qlabel_viewer = None

@@ -1,17 +1,15 @@
 import os
+from collections import OrderedDict
 
 import nibabel as nib
 import numpy as np
-from PIL import Image
 from loguru import logger
-
-from collections import OrderedDict
-from qimage2ndarray import array2qimage
+from PIL import Image
 
 from segbox.core.configs.static_params import (
     SUPPORTED_DICOM_FILE_TYPES,
-    SUPPORTED_MED_IMAGE_FILE_TYPES,
     SUPPORTED_IMAGE_FILE_TYPES,
+    SUPPORTED_MED_IMAGE_FILE_TYPES,
 )
 
 
@@ -42,13 +40,11 @@ class DataReader:
             img = Image.open(self.file_path)
             self.data_handler[f'{self.sender_index}'][f'{self.file_name}_ori_img'] = img
             self.data_handler[f'{self.sender_index}'][f'{self.file_name}_ori_array'] = np.asarray(img)
-            self.data_handler[f'{self.sender_index}'][f'{self.file_name}_ori_qimg'] = array2qimage(np.asarray(img))
 
         elif self.file_extension.lower() in SUPPORTED_DICOM_FILE_TYPES + SUPPORTED_MED_IMAGE_FILE_TYPES:
             img = nib.load(self.file_path)
             self.data_handler[f'{self.sender_index}'][f'{self.file_name}_ori_img'] = img
             self.data_handler[f'{self.sender_index}'][f'{self.file_name}_ori_array'] = img.get_fdata()
-            self.data_handler[f'{self.sender_index}'][f'{self.file_name}_ori_qimg'] = array2qimage(img.get_fdata())
 
         else:
             raise ValueError(f'Unsupported file format -> {self.file_extension}')

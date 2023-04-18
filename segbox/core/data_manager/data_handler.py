@@ -1,10 +1,10 @@
 import typing as t
-from loguru import logger
 from collections import OrderedDict
+
+from loguru import logger
 
 
 class DataHandler:
-
     def __init__(self):
         self._store = OrderedDict()
         self._case_name = None
@@ -27,4 +27,3 @@ class DataHandler:
     def case_name(self, value: t.Any) -> None:
         """Sets case name"""
         self._case_name = value
-

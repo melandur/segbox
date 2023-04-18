@@ -93,4 +93,3 @@ class DataWriter:
             if isinstance(value, sitk.Image):
                 if '_native_' in key and 'brain' not in key and 'seg_mask' not in key and config['save_native_images']:
                     self._write_image(key, 'native', 'original_data', reorient=True)
-
