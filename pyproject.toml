@@ -25,6 +25,7 @@ pynput = "^1.7.6"
 justpy = "^0.13.0"
 watchdog = "^3.0.0"
 pywebview = "^4.0.2"
+omegaconf = "^2.3.0"
 
 
 [build-system]
