@@ -13,6 +13,11 @@ from pynput import mouse
 from local_file_picker import local_file_picker
 
 
+class Reader:
+    def __init__(self):
+        pass
+
+
 class TopContainer:
     def __init__(self, mouse_handler):
         self.image_1 = ui.interactive_image(
@@ -80,12 +85,11 @@ class SegBox:
         self.init()
 
     def init(self):
-
         self.events = {
             'on_image': False,
             'mouse': {'over': False, 'down': False},
             'keys': {'shift': False, 'ctrl': False},
-            'indexes': {'scroll': 0, 'image': 0, 'mask': 0},
+            'indexes': {'scroll': 0, 'image': 0, 'mask': 100},
         }
 
         self.states = {
@@ -95,15 +99,23 @@ class SegBox:
             'color': 'SkyBlue',
         }
 
-        self.selected_points = {'mask_1': {'pos': [], 'neg': []},
-                                'mask_2': {'pos': [], 'neg': []},
-                                'mask_3': {'pos': [], 'neg': []},
-                                'mask_4': {'pos': [], 'neg': []},
-                                'mask_5': {'pos': [], 'neg': []},
-                                'mask_6': {'pos': [], 'neg': []}}
+        self.selected_points = {
+            'mask_1': {'pos': [], 'neg': []},
+            'mask_2': {'pos': [], 'neg': []},
+            'mask_3': {'pos': [], 'neg': []},
+            'mask_4': {'pos': [], 'neg': []},
+            'mask_5': {'pos': [], 'neg': []},
+            'mask_6': {'pos': [], 'neg': []},
+        }
 
-        self.mask_store = {'mask_1': None, 'mask_2': None, 'mask_3': None,
-                           'mask_4': None, 'mask_5': None, 'mask_6': None}
+        self.mask_store = {
+            'mask_1': None,
+            'mask_2': None,
+            'mask_3': None,
+            'mask_4': None,
+            'mask_5': None,
+            'mask_6': None,
+        }
 
         app.add_static_files('/static', self.folders['static'])  # serve all files in this folder
 
@@ -137,7 +149,6 @@ class SegBox:
             ui.label('SegBox').style('color: white; font-size: 20px; font-weight: bold')
 
         with ui.left_drawer(fixed=False).style('background-color: #ebf1fa').props('bordered') as right_drawer:
-
             with ui.card().style('margin-top: 15px'):
                 ui.label('Images').style('font-weight: bold')
                 ui.button('Choose files', on_click=self.pick_file).props('icon=folder').style('width: 100%')
@@ -178,13 +189,15 @@ class SegBox:
         self.init()
         self.update()
         self.reset_image_viewers()
+        self.image_overlay()
 
     def on_scroll(self, x, y, dx, dy):
         if self.events['on_image']:
             self.events['indexes']['scroll'] += dy
             self.events['indexes']['mask'] = int(np.clip(self.events['indexes']['mask'] + dy * 5, 0, 100))
             self.events['indexes']['image'] = int(np.clip(self.events['indexes']['image'] + dy * 5, 0, 100))
-            self.image_overlay()
+            if self.events['keys']['shift'] and self.events['on_image']:
+                self.image_overlay()
             # self.image_scroll()
 
     def update_image_viewers(self):
@@ -211,6 +224,7 @@ class SegBox:
             if self.states['count_images'] >= 6:
                 self.bottom_container.image_6.set_source(f'static/data/{self.states["image_names"][5]}')
                 self.bottom_container.image_6.style(f'width: {width}%')
+            self.image_overlay()
 
     def reset_image_viewers(self):
         self.top_container.image_1.style('width: 0%').set_source('static/ui/1x1.png')
@@ -223,31 +237,35 @@ class SegBox:
     def mouse_handler(self, event: MouseEventArguments) -> None:
         if event.type == 'mousedown':
             if self.top_container.image_1:
-                self.top_container.image_1.content += (
-                    f'<circle cx="{event.image_x}" '
-                    f'cy="{event.image_y}" '
-                )
+                self.top_container.image_1.content += f'<circle cx="{event.image_x}" ' f'cy="{event.image_y}" '
         if event.type == 'mouseover':
             self.events['on_image'] = True
         if event.type == 'mouseout':
             self.events['on_image'] = False
 
     def image_overlay(self):
-        if self.events['on_image'] and self.events['keys']['shift']:
-            mask_src = 'static/mask/mask.png'
-            self.top_container.image_1.content = f'''
-                 # <image xlink:href="{mask_src} " 
-                 opacity="{self.events['indexes']['mask']}%" width="100% height="100%" x="0 y="0 filter="url(#mask)" />
-                 <filter id="mask">
-                     <feComponentTransfer>
-                         <feFuncR type="linear" slope="40" intercept="-(0.5 * 40) + 0.5"/>
-                         <feFuncG type="linear" slope="40" intercept="-(0.5 * 40) + 0.5"/>
-                         <feFuncB type="linear" slope="40" intercept="-(0.5 * 40) + 0.5"/>
-                         <feFuncR type="linear" slope="1000"/>
-                     </feComponentTransfer>
-                     <feColorMatrix type="matrix" values="1 0 0 0 0   0 1 0 0 0   0 0 1 0 0  3 -1 -1 0 0" />
-                 </filter>
-             '''
+        mask_src = 'static/mask/mask.png'
+        images = [
+            self.top_container.image_1,
+            self.top_container.image_2,
+            self.top_container.image_3,
+            self.bottom_container.image_4,
+            self.bottom_container.image_5,
+            self.bottom_container.image_6,
+        ]
+        for image in images:
+            image.content = f'''
+                <image xlink:href="{mask_src}" opacity="{self.events['indexes']['mask']}%" width="100%" height="100%" x="0" y="0" filter="url(#mask)" />
+                <filter id="mask">
+                    <feComponentTransfer>
+                        <feFuncR type="linear" slope="40" intercept="-(0.5 * 40) + 0.5"/>
+                        <feFuncG type="linear" slope="40" intercept="-(0.5 * 40) + 0.5"/>
+                        <feFuncB type="linear" slope="40" intercept="-(0.5 * 40) + 0.5"/>
+                        <feFuncR type="linear" slope="1000"/>
+                    </feComponentTransfer>
+                    <feColorMatrix type="matrix" values="1 0 0 0 0   0 1 0 0 0   0 0 1 0 0  3 -1 -1 0 0" />
+                </filter>
+            '''
 
     def check_files(self):
         if self.states['count_images'] > 6:
@@ -276,6 +294,7 @@ class SegBox:
     def show_image(self):
         self.update()
         self.update_image_viewers()
+        self.image_overlay()
 
 
 sb = SegBox()
