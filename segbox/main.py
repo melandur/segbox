@@ -13,13 +13,18 @@ from pynput import mouse
 from local_file_picker import LocalFilePicker
 
 from segbox.gui.parts import TopContainer, BottomContainer
-
+from segbox.core.stats import Stats
+from segbox.core.reader import Reader
 
 # icons = https://fonts.google.com/icons
 
 
 class SegBox:
     def __init__(self):
+
+        self.stats = Stats()
+        self.data_reader = Reader(self.stats)
+
         self.events = None
         self.states = None
 
@@ -59,24 +64,6 @@ class SegBox:
             'image_names': [],
             'radius': 0,
             'color': 'SkyBlue',
-        }
-
-        self.selected_points = {
-            'mask_1': {'pos': [], 'neg': []},
-            'mask_2': {'pos': [], 'neg': []},
-            'mask_3': {'pos': [], 'neg': []},
-            'mask_4': {'pos': [], 'neg': []},
-            'mask_5': {'pos': [], 'neg': []},
-            'mask_6': {'pos': [], 'neg': []},
-        }
-
-        self.mask_store = {
-            'mask_1': None,
-            'mask_2': None,
-            'mask_3': None,
-            'mask_4': None,
-            'mask_5': None,
-            'mask_6': None,
         }
 
         app.add_static_files('/static', self.folders['static'])  # serve all files in this folder
@@ -289,5 +276,9 @@ class SegBox:
         self.image_overlay()
 
 
-sb = SegBox()
-sb()
+# sb = SegBox()
+# sb()
+from segbox.core.reader import Reader
+data_folder = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'static', 'data')
+d = Reader(data_folder)
+# d()
