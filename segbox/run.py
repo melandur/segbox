@@ -10,13 +10,15 @@ from nicegui import app, ui
 from nicegui.events import MouseEventArguments, KeyEventArguments
 from pynput import mouse
 
-from local_file_picker import local_file_picker
+from local_file_picker import LocalFilePicker
 
 
 class Reader:
     def __init__(self):
         pass
 
+
+# icons = https://fonts.google.com/icons
 
 class TopContainer:
     def __init__(self, mouse_handler):
@@ -147,28 +149,53 @@ class SegBox:
         with ui.header(elevated=False).style('background-color: #3874c8').classes('items-center justify-between'):
             ui.button(on_click=lambda: right_drawer.toggle()).props('flat color=white icon=menu')
             ui.label('SegBox').style('color: white; font-size: 20px; font-weight: bold')
+            ui.label('')
 
         with ui.left_drawer(fixed=False).style('background-color: #ebf1fa').props('bordered') as right_drawer:
-            with ui.card().style('margin-top: 15px'):
+
+            with ui.card():  # Images
                 ui.label('Images').style('font-weight: bold')
                 ui.button('Choose files', on_click=self.pick_file).props('icon=folder').style('width: 100%')
                 ui.button('Show Images', on_click=self.show_image).props('icon=camera').style('width: 100%')
-                ui.button('Reset', on_click=self.reset).props('icon=empty').style('width: 100%')
+                ui.button('Reset', on_click=self.reset).props('icon=restart_alt').style('width: 100%')
 
-            with ui.card().style('margin-top: 15px'):
+            with ui.card().style('margin-top: 15px'):  # Tools
                 ui.label('Tools').style('font-weight: bold')
                 # self.slider = ui.slider(min=0, max=100, value=15).bind_value(self.states, 'radius')
                 # self.color_input = ui.color_input(label='Color', value='#000000').bind_value(self.states.get, 'color')
 
-            with ui.card().style('margin-top: 15px'):
+            with ui.card().style('margin-top: 15px'):  # Label Mask
                 ui.label('Label Mask').style('font-weight: bold')
-                ui.toggle({1: '1', 2: '2', 3: '3', 4: '4', 5: '5', 6: '6'}, value=1)
+                with ui.tabs() as tabs:
+                    ui.tab('1')
+                    ui.tab('2')
 
-            with ui.card().style('margin-top: 15px'):
-                with ui.row():
-                    ui.spinner(size='lg')
-                    ui.spinner('audio', size='lg', color='green')
-                    ui.spinner('dots', size='lg', color='red')
+                with ui.tab_panels(tabs=tabs, value='1'):
+                    with ui.tab_panel('1'):
+                        with ui.column():
+                            ui.input(placeholder='name_1',
+                                     on_change=lambda e: result.set_text('you typed: ' + e.value),
+                                     validation={'Input too long': lambda value: len(value) < 20})
+                            result = ui.label()
+
+                        with ui.row().style('width: 100%'):
+                            ui.label('Opacity')
+
+                            slider = ui.slider(min=0, max=100, value=15)
+                            ui.label().bind_text_from(slider, 'value')
+
+                        with ui.row().style('width: 100%, justify-content: space-between'):
+                            ui.button('').props('icon=chevron_left')
+                            ui.button('').props('icon=refresh')
+                            ui.button('').props('icon=chevron_right')
+
+                    with ui.tab_panel('2'):
+                        ui.label('This is the second tab')
+                # ui.toggle({1: '1', 2: '2', 3: '3', 4: '4', 5: '5', 6: '6'}, value=1)
+
+            #         ui.spinner(size='lg')
+            #         ui.spinner('audio', size='lg', color='green')
+            #         ui.spinner('dots', size='lg', color='red')
 
             with ui.card().style('margin-top: 15px'):
                 ui.label('Progress').style('font-weight: bold')
@@ -274,7 +301,7 @@ class SegBox:
             os.makedirs(self.folders['data'], exist_ok=True)
 
     async def pick_file(self) -> None:
-        results = await local_file_picker(
+        results = await LocalFilePicker(
             directory=self.folders['last_visited'],
             upper_limit=os.path.expanduser('~'),
             multiple=True,

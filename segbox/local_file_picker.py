@@ -4,7 +4,7 @@ from typing import Optional
 from nicegui import ui
 
 
-class local_file_picker(ui.dialog):
+class LocalFilePicker(ui.dialog):
     def __init__(
         self,
         directory: str,
@@ -31,21 +31,23 @@ class local_file_picker(ui.dialog):
             self.upper_limit = Path(directory if upper_limit == ... else upper_limit).expanduser()
         self.show_hidden_files = show_hidden_files
 
-        with self, ui.card():
-            self.grid = (
-                ui.aggrid(
-                    {
-                        'columnDefs': [{'field': 'name', 'headerName': 'File'}],
-                        'rowSelection': 'multiple' if multiple else 'single',
-                    },
-                    html_columns=[0],
-                )
-                .classes('w-96')
-                .on('cellDoubleClicked', self.handle_double_click)
-            )
-            with ui.row().classes('w-full justify-end'):
-                ui.button('Cancel', on_click=self.close).props('outline')
-                ui.button('Ok', on_click=self._handle_ok)
+        with self, ui.card().style('width: 100%; height: 100%'):
+            with ui.row().style('width: 100%; height: 100%'):
+                self.grid = (
+                    ui.aggrid(
+                        {
+                            'columnDefs': [{'field': 'name', 'headerName': 'File'}],
+                            'rowSelection': 'multiple' if multiple else 'single',
+                        },
+                        html_columns=[0],
+                    )
+                    .on('cellDoubleClicked', self.handle_double_click)
+                    .on('cellClicked', self.handle_single_click)
+                ).style('width: 100%; height: 95%')
+                with ui.row().classes('w-full justify-end'):
+                    ui.button('Cancel', on_click=self.close).props('outline')
+                    ui.button('Ok', on_click=self._handle_ok)
+
         self.update_grid()
 
     def update_grid(self) -> None:
@@ -76,6 +78,11 @@ class local_file_picker(ui.dialog):
                 },
             )
         self.grid.update()
+
+    async def handle_single_click(self, msg: dict) -> None:
+        self.path = Path(msg['args']['data']['path'])
+        if self.path.is_dir():
+            self.update_grid()
 
     async def handle_double_click(self, msg: dict) -> None:
         self.path = Path(msg['args']['data']['path'])
