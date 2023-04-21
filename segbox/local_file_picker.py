@@ -43,7 +43,7 @@ class LocalFilePicker(ui.dialog):
                     )
                     .on('cellDoubleClicked', self.handle_double_click)
                     .on('cellClicked', self.handle_single_click)
-                ).style('width: 100%; height: 95%')
+                ).style('width: 100%; height: 95%; font-size: 1em')
                 with ui.row().classes('w-full justify-end'):
                     ui.button('Cancel', on_click=self.close).props('outline')
                     ui.button('Ok', on_click=self._handle_ok)

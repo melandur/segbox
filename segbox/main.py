@@ -12,50 +12,10 @@ from pynput import mouse
 
 from local_file_picker import LocalFilePicker
 
-
-class Reader:
-    def __init__(self):
-        pass
+from segbox.gui.parts import TopContainer, BottomContainer
 
 
 # icons = https://fonts.google.com/icons
-
-class TopContainer:
-    def __init__(self, mouse_handler):
-        self.image_1 = ui.interactive_image(
-            'static/ui/1x1.png',
-            on_mouse=mouse_handler,
-            events=['mouseover', 'mouseout', 'mousedown'],
-        ).style('width: 0%')
-        self.image_2 = ui.interactive_image(
-            'static/ui/1x1.png',
-            on_mouse=mouse_handler,
-            events=['mouseover', 'mouseout', 'mousedown'],
-        ).style('width: 0%')
-        self.image_3 = ui.interactive_image(
-            'static/ui/1x1.png',
-            on_mouse=mouse_handler,
-            events=['mouseover', 'mouseout', 'mousedown'],
-        ).style('width: 0%')
-
-
-class BottomContainer:
-    def __init__(self, mouse_handler):
-        self.image_4 = ui.interactive_image(
-            'static/ui/1x1.png',
-            on_mouse=mouse_handler,
-            events=['mouseover', 'mouseout', 'mousedown'],
-        ).style('width: 0%')
-        self.image_5 = ui.interactive_image(
-            'static/ui/1x1.png',
-            on_mouse=mouse_handler,
-            events=['mouseover', 'mouseout', 'mousedown'],
-        ).style('width: 0%')
-        self.image_6 = ui.interactive_image(
-            'static/ui/1x1.png',
-            on_mouse=mouse_handler,
-            events=['mouseover', 'mouseout', 'mousedown'],
-        ).style('width: 0%')
 
 
 class SegBox:
@@ -166,9 +126,13 @@ class SegBox:
 
             with ui.card().style('margin-top: 15px'):  # Label Mask
                 ui.label('Label Mask').style('font-weight: bold')
-                with ui.tabs() as tabs:
+                with ui.tabs().style('width: 100%') as tabs:
                     ui.tab('1')
                     ui.tab('2')
+                    ui.tab('3')
+                    ui.tab('4')
+                    ui.tab('5')
+                    ui.tab('6')
 
                 with ui.tab_panels(tabs=tabs, value='1'):
                     with ui.tab_panel('1'):
@@ -184,18 +148,19 @@ class SegBox:
                             slider = ui.slider(min=0, max=100, value=15)
                             ui.label().bind_text_from(slider, 'value')
 
-                        with ui.row().style('width: 100%, justify-content: space-between'):
+                        with ui.row().style('margin-top: 15px'):
+                            ui.button('').props('icon=delete')
                             ui.button('').props('icon=chevron_left')
-                            ui.button('').props('icon=refresh')
                             ui.button('').props('icon=chevron_right')
 
                     with ui.tab_panel('2'):
-                        ui.label('This is the second tab')
-                # ui.toggle({1: '1', 2: '2', 3: '3', 4: '4', 5: '5', 6: '6'}, value=1)
+                        ui.label('....')
 
-            #         ui.spinner(size='lg')
-            #         ui.spinner('audio', size='lg', color='green')
-            #         ui.spinner('dots', size='lg', color='red')
+                    with ui.tab_panel('3'):
+                        ui.label('....')
+
+                    with ui.tab_panel('4'):
+                        ui.label('....')
 
             with ui.card().style('margin-top: 15px'):
                 ui.label('Progress').style('font-weight: bold')
@@ -301,8 +266,9 @@ class SegBox:
             os.makedirs(self.folders['data'], exist_ok=True)
 
     async def pick_file(self) -> None:
+        last_visited = self.folders['last_visited']
         results = await LocalFilePicker(
-            directory=self.folders['last_visited'],
+            directory=last_visited,
             upper_limit=os.path.expanduser('~'),
             multiple=True,
             show_hidden_files=False,
@@ -313,6 +279,7 @@ class SegBox:
                 file_name = os.path.basename(result)
                 new_path = f'{self.folders["data"]}{os.sep}{file_name}'
                 self.folders['last_visited'] = os.path.dirname(result)
+                print(self.folders['last_visited'])
                 copy(result, new_path)
                 self.update()
                 # check_files()
