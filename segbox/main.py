@@ -127,12 +127,10 @@ class SegBox:
             with ui.card().style('margin-top: 15px'):  # Label Mask
                 ui.label('Label Mask').style('font-weight: bold')
                 with ui.tabs().style('width: 100%') as tabs:
-                    ui.tab('1')
-                    ui.tab('2')
-                    ui.tab('3')
-                    ui.tab('4')
-                    ui.tab('5')
-                    ui.tab('6')
+                    ui.tab('1').style('width: 1%')
+                    ui.tab('2').style('width: 1%')
+                    ui.tab('3').style('width: 1%')
+                    ui.tab('4').style('width: 1%')
 
                 with ui.tab_panels(tabs=tabs, value='1'):
                     with ui.tab_panel('1'):
@@ -145,7 +143,7 @@ class SegBox:
                         with ui.row().style('width: 100%'):
                             ui.label('Opacity')
 
-                            slider = ui.slider(min=0, max=100, value=15)
+                            slider = ui.slider(min=0, max=100, value=0)
                             ui.label().bind_text_from(slider, 'value')
 
                         with ui.row().style('margin-top: 15px'):
