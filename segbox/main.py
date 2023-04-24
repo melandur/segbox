@@ -19,11 +19,20 @@ from segbox.core.reader import Reader
 # icons = https://fonts.google.com/icons
 
 
+colors = {
+    'red': '0.87 0 0 0 0   0 0.20 0 0 0   0 0 0.30 0 0',
+    'orange': '0.96 0 0 0 0   0 0.54 0 0 0   0 0 0.37 0 0',
+    'yellow': '0.97 0 0 0 0   0 0.88 0 0 0   0 0 0.44 0 0',
+    'green': '0.58 0 0 0 0   0 0.81 0 0 0   0 0 0.57 0 0',
+    'blue': '0.21 0 0 0 0   0 0.60 0 0 0   0 0 0.80 0 0',
+    'purple': '0.59 0 0 0 0   0 0.34 0 0 0   0 0 0.64 0 0',
+}
+
+
 class SegBox:
     def __init__(self):
-
         self.stats = Stats()
-        self.data_reader = Reader(self.stats)
+        self.data_reader = Reader()
 
         self.events = None
         self.states = None
@@ -36,9 +45,13 @@ class SegBox:
             'last_visited': '~',
             'static': static_folder,
             'ui': os.path.join(static_folder, 'ui'),
-            'data': os.path.join(static_folder, 'data'),
+            'tmp': os.path.join(static_folder, 'data', 'tmp'),
+            'data': os.path.join(static_folder, 'data', 'img'),
             'mask': os.path.join(static_folder, 'mask'),
         }
+
+        for folder in self.folders.values():
+            os.makedirs(folder, exist_ok=True)
 
         with ui.row().style('width: 100%'):
             self.top_container = TopContainer(self.mouse_handler)
@@ -80,10 +93,10 @@ class SegBox:
     def update(self):
         static_folder = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'static')
         self.folders = {
-            'last_visited': '~',
             'static': static_folder,
             'ui': os.path.join(static_folder, 'ui'),
-            'data': os.path.join(static_folder, 'data'),
+            'tmp': os.path.join(static_folder, 'data', 'tmp'),
+            'data': os.path.join(static_folder, 'data', 'img'),
             'mask': os.path.join(static_folder, 'mask'),
         }
 
@@ -99,7 +112,6 @@ class SegBox:
             ui.label('')
 
         with ui.left_drawer(fixed=False).style('background-color: #ebf1fa').props('bordered') as right_drawer:
-
             with ui.card():  # Images
                 ui.label('Images').style('font-weight: bold')
                 ui.button('Choose files', on_click=self.pick_file).props('icon=folder').style('width: 100%')
@@ -122,9 +134,11 @@ class SegBox:
                 with ui.tab_panels(tabs=tabs, value='1'):
                     with ui.tab_panel('1'):
                         with ui.column():
-                            ui.input(placeholder='name_1',
-                                     on_change=lambda e: result.set_text('you typed: ' + e.value),
-                                     validation={'Input too long': lambda value: len(value) < 20})
+                            ui.input(
+                                placeholder='name_1',
+                                on_change=lambda e: result.set_text('you typed: ' + e.value),
+                                validation={'Input too long': lambda value: len(value) < 20},
+                            )
                             result = ui.label()
 
                         with ui.row().style('width: 100%'):
@@ -155,7 +169,7 @@ class SegBox:
         with ui.footer().style('background-color: #3874c8'):
             ui.label('MIA Lab - ARTORG - University of Bern')
 
-        ui.run()
+        ui.run(title='SegBox')
 
     def reset(self):
         """Reset the application"""
@@ -175,7 +189,36 @@ class SegBox:
             self.events['indexes']['image'] = int(np.clip(self.events['indexes']['image'] + dy * 5, 0, 100))
             if self.events['keys']['shift'] and self.events['on_image']:
                 self.image_overlay()
-            # self.image_scroll()
+
+            if self.events['on_image'] and not self.events['keys']['shift']:
+                self.image_update()
+
+    def image_update(self) -> None:
+        if self.states['count_images']:
+            if self.states['count_images'] > 3:
+                width = int(95 / 3)  # 95% of the screen
+            else:
+                width = int(95 / self.states['count_images'])
+            idx = self.events['indexes']['image']
+            if self.states['count_images'] >= 1:
+                self.top_container.image_1.set_source(f'static/data/img/img_0_{idx}.png')
+                self.top_container.image_1.style(f'width: {width}%')
+            if self.states['count_images'] >= 2:
+                self.top_container.image_2.set_source(f'static/data/img/img_1_{idx}.png')
+                self.top_container.image_2.style(f'width: {width}%')
+            if self.states['count_images'] >= 3:
+                self.top_container.image_3.set_source(f'static/data/img/img_2_{idx.png}')
+                self.top_container.image_3.style(f'width: {width}%')
+            if self.states['count_images'] >= 4:
+                self.bottom_container.image_4.set_source(f'static/data/img/img_3_{idx.png}')
+                self.bottom_container.image_4.style(f'width: {width}%')
+            if self.states['count_images'] >= 5:
+                self.bottom_container.image_5.set_source(f'static/data/img/img_4_{idx.png}')
+                self.bottom_container.image_5.style(f'width: {width}%')
+            if self.states['count_images'] >= 6:
+                self.bottom_container.image_6.set_source(f'static/data/img/img_5_{idx.png}')
+                self.bottom_container.image_6.style(f'width: {width}%')
+
 
     def update_image_viewers(self):
         if self.states['count_images']:
@@ -186,21 +229,21 @@ class SegBox:
             if self.states['count_images'] >= 1:
                 self.top_container.image_1.set_source(f'static/data/{self.states["image_names"][0]}')
                 self.top_container.image_1.style(f'width: {width}%')
-            if self.states['count_images'] >= 2:
-                self.top_container.image_2.set_source(f'static/data/{self.states["image_names"][1]}')
-                self.top_container.image_2.style(f'width: {width}%')
-            if self.states['count_images'] >= 3:
-                self.top_container.image_3.set_source(f'static/data/{self.states["image_names"][2]}')
-                self.top_container.image_3.style(f'width: {width}%')
-            if self.states['count_images'] >= 4:
-                self.bottom_container.image_4.set_source(f'static/data/{self.states["image_names"][3]}')
-                self.bottom_container.image_4.style(f'width: {width}%')
-            if self.states['count_images'] >= 5:
-                self.bottom_container.image_5.set_source(f'static/data/{self.states["image_names"][4]}')
-                self.bottom_container.image_5.style(f'width: {width}%')
-            if self.states['count_images'] >= 6:
-                self.bottom_container.image_6.set_source(f'static/data/{self.states["image_names"][5]}')
-                self.bottom_container.image_6.style(f'width: {width}%')
+            # if self.states['count_images'] >= 2:
+            #     self.top_container.image_2.set_source(f'static/data/{self.states["image_names"][1]}')
+            #     self.top_container.image_2.style(f'width: {width}%')
+            # if self.states['count_images'] >= 3:
+            #     self.top_container.image_3.set_source(f'static/data/{self.states["image_names"][2]}')
+            #     self.top_container.image_3.style(f'width: {width}%')
+            # if self.states['count_images'] >= 4:
+            #     self.bottom_container.image_4.set_source(f'static/data/{self.states["image_names"][3]}')
+            #     self.bottom_container.image_4.style(f'width: {width}%')
+            # if self.states['count_images'] >= 5:
+            #     self.bottom_container.image_5.set_source(f'static/data/{self.states["image_names"][4]}')
+            #     self.bottom_container.image_5.style(f'width: {width}%')
+            # if self.states['count_images'] >= 6:
+            #     self.bottom_container.image_6.set_source(f'static/data/{self.states["image_names"][5]}')
+            #     self.bottom_container.image_6.style(f'width: {width}%')
             self.image_overlay()
 
     def reset_image_viewers(self):
@@ -240,7 +283,7 @@ class SegBox:
                         <feFuncB type="linear" slope="40" intercept="-(0.5 * 40) + 0.5"/>
                         <feFuncR type="linear" slope="1000"/>
                     </feComponentTransfer>
-                    <feColorMatrix type="matrix" values="1 0 0 0 0   0 1 0 0 0   0 0 1 0 0  3 -1 -1 0 0" />
+                    <feColorMatrix type="matrix" values="0 0 0 0 0   0 1 0 0 0   0 0 1 0 0  3 -1 -1 0 0" />
                 </filter>
             '''
 
@@ -250,25 +293,36 @@ class SegBox:
             shutil.rmtree(self.folders['data'])
             os.makedirs(self.folders['data'], exist_ok=True)
 
+    def set_last_visited(self, path: str) -> None:
+        self.folders['last_visited'] = path
+
     async def pick_file(self) -> None:
-        last_visited = self.folders['last_visited']
         results = await LocalFilePicker(
-            directory=last_visited,
+            directory=self.folders['last_visited'],
             upper_limit=os.path.expanduser('~'),
             multiple=True,
             show_hidden_files=False,
         )
         if results:
             for result in results:
-                ui.notify(result)
                 file_name = os.path.basename(result)
-                new_path = f'{self.folders["data"]}{os.sep}{file_name}'
-                self.folders['last_visited'] = os.path.dirname(result)
-                print(self.folders['last_visited'])
+                new_path = f'{self.folders["tmp"]}{os.sep}{file_name}'
                 copy(result, new_path)
-                self.update()
-                # check_files()
-                self.update_image_viewers()
+                error = self.data_reader(self.folders['data'])
+                if error:
+                    self.dialog(error)
+                    self.reset_image_viewers()
+                else:
+                    self.update()
+                    self.update_image_viewers()
+                self.set_last_visited(os.path.dirname(result))
+
+    def dialog(self, message, dialog_type='Info'):
+        with ui.dialog() as dialog, ui.card():
+            ui.label(dialog_type)
+            ui.label(message)
+            ui.button('Close', on_click=dialog.close)
+        dialog.open()
 
     def show_image(self):
         self.update()
@@ -276,9 +330,12 @@ class SegBox:
         self.image_overlay()
 
 
-# sb = SegBox()
-# sb()
-from segbox.core.reader import Reader
-data_folder = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'static', 'data')
-d = Reader(data_folder)
-# d()
+sb = SegBox()
+sb()
+# from segbox.core.reader import Reader
+# stats = Stats()
+# data_reader = Reader()
+# print()
+# data_folder = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'static', 'data')
+# d = Reader()
+# d(data_folder)

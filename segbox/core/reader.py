@@ -2,11 +2,10 @@ import os
 from PIL import Image
 import nibabel as nib
 import numpy as np
-from collections import OrderedDict
+import matplotlib.pyplot as plt
+from pydicom import dcmread
 
 from segbox.core.stats import Stats
-
-# get borg pattern from stats update shared state
 
 
 class Reader(Stats):
@@ -14,48 +13,89 @@ class Reader(Stats):
         super().__init__()
         self._shared_state.update(kwargs)
 
-        self.file_name = None
-        self.file_extension = None
-        self.latest_visited_folder = None
+    def __call__(self, static_files) -> None or str:
+        self.static_files = static_files
+        files = os.listdir(static_files)
 
-    def __call__(self, file_path, sender_index) -> None:
-        self.file_path = file_path
-        self.sender_index = sender_index
+        if len(files) > 6:
+            self.reset()
+            return 'Only 6 images are supported'
 
-        file = os.path.basename(file_path)
-        folder = os.path.dirname(file_path)
-        self.file_name = file.split('.')[0]
-        self.file_extension = '.'.join(file.split('.')[1:])
+        for index, file in enumerate(files):
+            file_name = file.split('.')[0]
+            file_extension = '.'.join(file.split('.')[1:])
+            file_path = os.path.join(static_files, file)
+            self._load_file(index, file_name, file_extension, file_path)
 
-        self._load_file()
-        self.latest_visited_folder = folder
+        # error = self._check_image_dimensions()
+        # if error:
+        #     self.reset()
+        #     return error
 
-    def _load_file(self) -> None:
-        self.store[f'{self.sender_index}'] = OrderedDict()
-        self.store[f'{self.sender_index}'][f'{self.file_name}_extension'] = self.file_extension
-        if self.file_extension.lower() in ('png', 'jpg', 'jpeg', 'bmp', 'tif', 'tiff'):
-            img = Image.open(self.file_path)
-            self.store[f'{self.sender_index}'][f'{self.file_name}_ori_img'] = img
-            self.store[f'{self.sender_index}'][f'{self.file_name}_ori_array'] = np.asarray(img)
+    def _load_file(self, index, file_name, file_extension, file_path) -> None:
+        """Loads image and mask files into memory"""
 
-        elif self.file_extension.lower() in ('nii', 'nii.gz'):
-            img = nib.load(self.file_path)
-            self.store[f'{self.sender_index}'][f'{self.file_name}_ori_img'] = img
-            self.store[f'{self.sender_index}'][f'{self.file_name}_ori_array'] = img.get_fdata()
+        self.store[f'img_{index}']['name'] = file_name
+        self.store[f'img_{index}']['path'] = file_path
+        self.store[f'img_{index}'][f'extension'] = file_extension
 
+        if file_extension.lower() in ('png', 'jpg', 'jpeg', 'bmp', 'tif', 'tiff'):
+            img = Image.open(file_path)
+            self.store[f'img_{index}']['ori'] = img
+            arr_data = np.asarray(img)
+            self.store[f'img_{index}']['arr'] = arr_data
+            self.store['img_dim'] = '2d'
+            # self.extract_2d(arr_data, file_name)
+
+        elif file_extension.lower() in ('nii', 'nii.gz'):
+            img = nib.load(file_path)
+            img = nib.as_closest_canonical(img)
+            self.store[f'img_{index}']['ori'] = img
+            arr_data = img.get_fdata()
+            self.store[f'img_{index}']['arr'] = arr_data
+            self.extract_3d(arr_data, file_name)
+            self.store['img_dim'] = '3d'
         else:
-            raise ValueError(f'Unsupported file format -> {self.file_extension}')
-
-    def get_qimgs(self):
-        arrays = OrderedDict()
-        for _, values in self.store.items():
-            for key, value in values.items():
-                if key.endswith('_ori_qimg'):
-                    arrays[key] = value
-        return arrays
+            raise ValueError(f'Unsupported file format -> {file_extension}')
 
     def pop(self):
         last_key = list(self.store.keys())[-1]
         self.store.pop(last_key)
 
+    # def _check_image_dimensions(self):
+    #     dims = []
+    #     for image in self.store:
+    #         if 'img' in image:
+    #             print(self.store[image]['arr'])
+    #             if self.store[image]['arr'] is not None:
+    #                 dims.append(self.store[image]['arr'].shape)
+    #     if len(set(dims)) != 1:
+    #         message = f'Images have different dimensions -> {dims}'
+    #         return message
 
+    def extract_2d(self, arr_data, file_name):
+        file_path = os.path.join(self.static_files, 'img', file_name)
+        os.makedirs(file_path, exist_ok=True)
+        plt.imsave(os.path.join(file_path, f'{file_name}.png'), arr_data, cmap='gray')
+
+    def extract_3d(self, arr_data, file_name):
+        """Extracts 3D images from 4D images"""
+        if arr_data is not None:
+            if len(arr_data.shape) == 3:
+                for slice in range(arr_data.shape[2]):
+                    arr_slice = arr_data[:, :, slice].astype(np.float32)
+                    # print(arr_slice.shape)
+                    # im = Image.fromarray(arr_slice)
+
+                    new_file_path = os.path.join(self.static_files, f'{file_name}_{slice}.png')
+                    # print(new_file_path)
+
+                    plt.imsave(new_file_path, arr_slice, cmap='gray')
+                    # im.save(new_file_path)
+
+                    # self.store[image]['arr'] = self.store[image]['arr'][:, :, :, 0]
+
+
+if __name__ == '__main__':
+    reader = Reader()
+    reader('/home/melandur/Code/segbox/segbox/static/data')
