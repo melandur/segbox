@@ -88,3 +88,8 @@ class Colors:
         self.green = '0.58 0 0 0 0   0 0.81 0 0 0   0 0 0.57 0 0'
         self.blue = '0.21 0 0 0 0   0 0.60 0 0 0   0 0 0.80 0 0'
         self.purple = '0.59 0 0 0 0   0 0.34 0 0 0   0 0 0.64 0 0'
+
+
+def notifier(text):
+    """Notifier for displaying messages to the user."""
+    ui.notify(text, position='bottom', timeout=2000)

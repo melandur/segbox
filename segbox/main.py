@@ -12,7 +12,7 @@ from pynput import mouse
 
 from segbox.core.local_file_picker import LocalFilePicker
 
-from segbox.gui.parts import TopContainer, BottomContainer, Events, Folders, Colors
+from segbox.gui.parts import TopContainer, BottomContainer, Events, Folders, Colors, notifier
 from segbox.core.states import States
 from segbox.core.reader import Reader
 
@@ -42,7 +42,6 @@ class SegBox:
         self.model_path = os.path.join(source, 'sam', 'models', 'sam_vit_b_01ec64.pth')
         self.sam = sam_model_registry['vit_b'](checkpoint=self.model_path)
         self.sam.to(device='cuda', )
-
         self.predictor = SamPredictor(self.sam)
 
         app.add_static_files('/static', self.folders.static)  # serve all files in this folder
@@ -70,11 +69,17 @@ class SegBox:
                     self.mask_overlay()
 
                 if not self.events.key_shift:
-                    self.events.image_index = int(np.clip(self.events.image_index + dy * 5, 0, 100))
+                    if self.state.get_gui('image_dim') != 2:
+                        max_slices = self.state.get_gui('image_slices')
+                        self.events.image_index = int(np.clip(self.events.image_index + dy, 0, max_slices - 1))
+                        self.update_viewers()
 
     def _mouse_event(self, event: MouseEventArguments) -> None:
         if event.type == 'mousedown':
             if self.top_container.viewer_1:
+                image_slice = self.state.get_array_slice(0, self.events.image_index)
+
+                self.predictor.set_image(image_slice)
                 self.state.set_gui(time_stamp=time.time())
                 self.state.add_mask_iteration()
 
@@ -98,15 +103,15 @@ class SegBox:
 
     def add_mask_mode(self):
         self.state.set_gui(mask_mode=1)
-        ui.notify('Click on the area where you want to add mask')
+        notifier('Click on the area where you want to add mask')
 
     def remove_mask_mode(self):
         self.state.set_gui(mask_mode=0)
-        ui.notify('Click on the area where you want to remove mask')
+        notifier('Click on the area where you want to remove mask')
 
     def reset_masks(self):
         mask_number = self.state.get_gui('mask_number')
-        ui.notify(f'Reset mask {mask_number + 1}')
+        notifier(f'Reset mask {mask_number + 1}')
 
         self.state.reset_mask()
         self.mask_overlay(reload=True)
@@ -117,8 +122,7 @@ class SegBox:
                 os.remove(os.path.join(self.folders.mask, mask))
 
     def set_mask_number(self, number: int):
-        zero_based_number = number - 1
-        self.state.set_gui(mask_number=zero_based_number)
+        self.state.set_gui(mask_number=number)
         self.mask_overlay(reload=True)
         self.state.set_gui(mask_mode=1)
 
@@ -173,13 +177,13 @@ class SegBox:
             with ui.card().style('margin-top: 15px'):  # Label Mask
                 ui.label('Label Mask').style('font-weight: bold')
                 with ui.tabs().style('width: 100%') as tabs:
-                    for tab_number in [1, 2, 3, 4]:
-                        tab = ui.tab(f'{tab_number}', label=f'{tab_number}').style('width: 1%')
+                    for tab_number in [0, 1, 2, 3]:
+                        tab = ui.tab(f'{tab_number + 1}', label=f'{tab_number + 1}').style('width: 1%')
                         tab.on(type='click', handler=lambda _, x=tab_number: self.set_mask_number(x))
 
                 with ui.tab_panels(tabs=tabs, value='1'):
-                    for tab_number in [1, 2, 3, 4]:
-                        with ui.tab_panel(str(tab_number)):
+                    for tab_number in [0, 1, 2, 3]:
+                        with ui.tab_panel(str(tab_number + 1)):
                             ui.input(placeholder=self.state.get_mask_name(tab_number), on_change=lambda e, x=tab_number: self.set_mask_name(x, e.value))
 
                             with ui.row().style('margin-top: 15px'):
@@ -208,10 +212,19 @@ class SegBox:
     def save_masks(self):
         """Save the masks"""
         mask_number = self.state.get_gui('mask_number')
-        mask_name = self.state.get_gui(f'name_{mask_number}')
+        _, max_iteration = self.state.get_mask_iteration()
+        mask_name = self.state.get_mask_name(mask_number)
 
-        for mask in self.state.get_masks():
-            mask.save()
+        masks = os.listdir(self.folders.mask)
+        masks = [mask for mask in masks if f'mask_{mask_number}_it_{max_iteration}' in mask]
+
+        for mask in masks:
+            mask_path = os.path.join(os.path.expanduser('~'), 'Downloads', 'SegBox', mask_name, mask)
+            os.makedirs(os.path.dirname(mask_path), exist_ok=True)
+            shutil.copyfile(os.path.join(self.folders.mask, mask), mask_path)
+
+        export_path = os.path.join(os.path.expanduser('~'), 'Downloads', 'SegBox', mask_name)
+        notifier(f'Masks saved -> {export_path}')
 
     def reset(self) -> None:
         """Reset the application"""
@@ -219,7 +232,7 @@ class SegBox:
             if os.path.exists(folder):
                 shutil.rmtree(folder)
                 os.mkdir(folder)
-        self.state.reset_mask()
+        self.state.init()
         self.reset_viewers()
 
     def get_index(self) -> int:
@@ -276,8 +289,6 @@ class SegBox:
                           <feColorMatrix type="matrix" values="{color}  3 -1 -1 0 0" />
                           </filter></g>'''
 
-
-
     async def pick_file(self) -> None:
         paths = await LocalFilePicker(
             directory=self.folders.last_visited,
@@ -301,7 +312,6 @@ class SegBox:
                 self.reset_viewers()
             else:
                 self.update_viewers()
-                self.predictor.set_image(self.state.get_img(0, 'array'))
 
     @staticmethod
     def dialog(message: str, dialog_type: str = 'Info') -> None:

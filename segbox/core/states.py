@@ -24,8 +24,14 @@ class States:
     def __init__(self) -> None:
         self.__dict__ = self._shared_state
 
+        self._state = None
+
+    def init(self):
+        """Initialize the state"""
+
         self._state = NestedDefaultDict({
             'imgs': NestedDefaultDict({}),
+            'imgs_slices': NestedDefaultDict({}),
             'masks': NestedDefaultDict({}),
 
             'gui': {
@@ -33,6 +39,7 @@ class States:
                 'image_count': 0,
                 'image_slice': 0,
                 'image_slices': 0,
+                'image_dim': None,
                 'image_dimension': None,
 
                 'mask_mode': 1,
@@ -70,6 +77,7 @@ class States:
                 'local_path': None,
                 'original': None,
                 'array': None,
+                'array_slices': None,
                 'extension': None,
             }
 
@@ -84,6 +92,12 @@ class States:
         if key not in self._state['gui']:
             raise KeyError(f'Key {key} not found in gui')
         return self._state['gui'].get(key, None)
+
+    def set_array_slice(self, img_number, sl_index, array_slice) -> None:
+        self._state['imgs'][f'img_{img_number}'][f'sl_{sl_index}'] = array_slice
+
+    def get_array_slice(self, img_number, sl_index) -> t.Any:
+        return self._state['imgs'][f'img_{img_number}'][f'sl_{sl_index}']
 
     def set_img(self, img_number: int, **kwargs) -> None:
         for key in kwargs:
@@ -125,7 +139,6 @@ class States:
             self._state['gui']['max_mask_iterations'][f'mask_{mask_number}'] = iteration
 
     def get_mask_name(self, mask_number: int = 0) -> str:
-        mask_number = mask_number - 1
         return self._state['gui']['mask_name'][f'mask_{mask_number}']
 
     def set_mask_name(self, mask_number: int, name: str) -> None:
