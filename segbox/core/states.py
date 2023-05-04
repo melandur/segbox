@@ -177,9 +177,9 @@ class States:
         image_count = self.get_gui('image_count')
         if image_count:
             if image_count > 3:
-                width = int(95 / 3)  # 95% of the screen
+                width = int(80 / 3)  # 95% of the screen
             else:
-                width = int(95 / image_count)
+                width = int(80 / image_count)
         self.set_gui(viewer_width=width)
 
     def reset_mask(self):

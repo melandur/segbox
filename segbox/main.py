@@ -69,15 +69,17 @@ class SegBox:
                     self.mask_overlay()
 
                 if not self.events.key_shift:
-                    if self.state.get_gui('image_dim') != 2:
+                    if self.state.get_gui('image_dim') == 3:
                         max_slices = self.state.get_gui('image_slices')
                         self.events.image_index = int(np.clip(self.events.image_index + dy, 0, max_slices - 1))
                         self.update_viewers()
+                        self.mask_overlay()
 
     def _mouse_event(self, event: MouseEventArguments) -> None:
         if event.type == 'mousedown':
             if self.top_container.viewer_1:
                 image_slice = self.state.get_array_slice(0, self.events.image_index)
+                self.state.set_gui(image_slice=self.events.image_index)
 
                 self.predictor.set_image(image_slice)
                 self.state.set_gui(time_stamp=time.time())
@@ -268,11 +270,9 @@ class SegBox:
 
         slice_number = self.get_index()
         time_stamp = self.state.get_gui('time_stamp')
-
         mask_iterations = self.state.get_gui('mask_iterations')
 
         for viewer in self.viewers:
-
             viewer.content = ''''''
             for mask_number, color in zip([0, 1, 2, 3], [self.colors.red, self.colors.green, self.colors.blue, self.colors.purple]):
                 if mask_iterations[f'mask_{mask_number}'] == 0:
