@@ -8,8 +8,9 @@ import argparse
 import warnings
 
 import torch
-from segment_anything import sam_model_registry
-from segment_anything.utils.onnx import SamOnnxModel
+
+from segbox.sam.segment_anything import sam_model_registry
+from segbox.sam.segment_anything.utils.onnx import SamOnnxModel
 
 try:
     import onnxruntime  # type: ignore
@@ -163,30 +164,32 @@ def to_numpy(tensor):
 
 
 if __name__ == "__main__":
-    args = parser.parse_args()
+    # args = parser.parse_args()
     run_export(
-        model_type=args.model_type,
-        checkpoint=args.checkpoint,
-        output=args.output,
-        opset=args.opset,
-        return_single_mask=args.return_single_mask,
-        gelu_approximate=args.gelu_approximate,
-        use_stability_score=args.use_stability_score,
-        return_extra_metrics=args.return_extra_metrics,
+        model_type='vit_b',
+        checkpoint='sam_vit_b_01ec64.pth',
+        output='/home/melandur/Downloads/vit_b_01ec64.onnx',
+        opset=17,
+        return_single_mask=True,
+        # gelu_approximate=args.gelu_approximate,
+        # use_stability_score=args.use_stability_score,
+        # return_extra_metrics=args.return_extra_metrics,
     )
 
-    if args.quantize_out is not None:
-        assert onnxruntime_exists, "onnxruntime is required to quantize the model."
-        from onnxruntime.quantization import QuantType  # type: ignore
-        from onnxruntime.quantization.quantize import quantize_dynamic  # type: ignore
+    # if args.quantize_out is not None:
+    #     assert onnxruntime_exists, "onnxruntime is required to quantize the model."
+    #     from onnxruntime.quantization import QuantType  # type: ignore
+    #     from onnxruntime.quantization.quantize import quantize_dynamic  # type: ignore
+    #
+    #     print(f"Quantizing model and writing to {args.quantize_out}...")
+    #     quantize_dynamic(
+    #         model_input=args.output,
+    #         model_output=args.quantize_out,
+    #         optimize_model=True,
+    #         per_channel=False,
+    #         reduce_range=False,
+    #         weight_type=QuantType.QUInt8,
+    #     )
+    #     print("Done!")
 
-        print(f"Quantizing model and writing to {args.quantize_out}...")
-        quantize_dynamic(
-            model_input=args.output,
-            model_output=args.quantize_out,
-            optimize_model=True,
-            per_channel=False,
-            reduce_range=False,
-            weight_type=QuantType.QUInt8,
-        )
-        print("Done!")
+

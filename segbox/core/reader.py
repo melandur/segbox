@@ -1,99 +1,73 @@
+
+import shutil
 import os
 from PIL import Image
 import nibabel as nib
 import numpy as np
 import matplotlib.pyplot as plt
-from pydicom import dcmread
-
-from segbox.core.stats import Stats
 
 
-class Reader(Stats):
+from segbox.core.states import States
+
+
+class Reader(States):
     def __init__(self, **kwargs) -> None:
-        super().__init__()
+        super().__init__()  # Borg pattern
         self._shared_state.update(kwargs)
 
-    def __call__(self, static_files) -> None or str:
-        self.static_files = static_files
-        files = os.listdir(static_files)
+    def __call__(self, data_folder) -> None or str:
+        self.data_folder = data_folder
 
-        if len(files) > 6:
-            self.reset()
-            return 'Only 6 images are supported'
+        for index, img_name in enumerate(self._state['imgs']):
+            if self.get_img(index, 'local_path'):
+                self._load_file(index)
 
-        for index, file in enumerate(files):
-            file_name = file.split('.')[0]
-            file_extension = '.'.join(file.split('.')[1:])
-            file_path = os.path.join(static_files, file)
-            self._load_file(index, file_name, file_extension, file_path)
+        # for index, file in enumerate(files):
+        #
+        #     self._load_file(index, file_name, file_extension, file_path)
 
         # error = self._check_image_dimensions()
         # if error:
         #     self.reset()
         #     return error
 
-    def _load_file(self, index, file_name, file_extension, file_path) -> None:
+    def _load_file(self, index) -> None:
         """Loads image and mask files into memory"""
+        if self.get_img(index, 'extension').lower() in ('png', 'jpg', 'jpeg', 'bmp', 'tif', 'tiff'):
+            img = Image.open(self.get_img(index, 'local_path'))
+            self.set_img(index, original=img)
+            self.set_img(index, array=np.asarray(img))
+            self._check_image_dimensions(index)
+            shutil.copy(self.get_img(index, 'local_path'), os.path.join(self.data_folder, f'img_{index}_sl_0.png'))
+        #
+        # elif self.store[img_name]['extension'].lower() in ('nii', 'nii.gz'):
+        #     img = nib.load(self.store[img_name]['local_path'])
+        #     img = nib.as_closest_canonical(img)
+        #     self.store[img_name]['ori'] = img
+        #     self.store[img_name]['arr'] = img.get_fdata()
+        #     self.extract_3d(img)
 
-        self.store[f'img_{index}']['name'] = file_name
-        self.store[f'img_{index}']['path'] = file_path
-        self.store[f'img_{index}'][f'extension'] = file_extension
-
-        if file_extension.lower() in ('png', 'jpg', 'jpeg', 'bmp', 'tif', 'tiff'):
-            img = Image.open(file_path)
-            self.store[f'img_{index}']['ori'] = img
-            arr_data = np.asarray(img)
-            self.store[f'img_{index}']['arr'] = arr_data
-            self.store['img_dim'] = '2d'
-            # self.extract_2d(arr_data, file_name)
-
-        elif file_extension.lower() in ('nii', 'nii.gz'):
-            img = nib.load(file_path)
-            img = nib.as_closest_canonical(img)
-            self.store[f'img_{index}']['ori'] = img
-            arr_data = img.get_fdata()
-            self.store[f'img_{index}']['arr'] = arr_data
-            self.extract_3d(arr_data, file_name)
-            self.store['img_dim'] = '3d'
         else:
-            raise ValueError(f'Unsupported file format -> {file_extension}')
+            raise ValueError(f'Unsupported file format -> {self.get_img(index, "extension")}')
 
-    def pop(self):
-        last_key = list(self.store.keys())[-1]
-        self.store.pop(last_key)
+    def _check_image_dimensions(self, index) -> None:
+        """Checks if all images have the same dimensions"""
+        if index == 0:
+            self.set_gui(image_dimension=self.get_img(index, 'array').shape)
+        else:
+            test_shape = self.get_img(index, 'array').shape
+            if self.get_gui('image_dimension') != test_shape:
+                raise ValueError(f'Images have different dimensions -> {test_shape}')
 
-    # def _check_image_dimensions(self):
-    #     dims = []
-    #     for image in self.store:
-    #         if 'img' in image:
-    #             print(self.store[image]['arr'])
-    #             if self.store[image]['arr'] is not None:
-    #                 dims.append(self.store[image]['arr'].shape)
-    #     if len(set(dims)) != 1:
-    #         message = f'Images have different dimensions -> {dims}'
-    #         return message
-
-    def extract_2d(self, arr_data, file_name):
-        file_path = os.path.join(self.static_files, 'img', file_name)
-        os.makedirs(file_path, exist_ok=True)
-        plt.imsave(os.path.join(file_path, f'{file_name}.png'), arr_data, cmap='gray')
-
-    def extract_3d(self, arr_data, file_name):
+    def extract_3d(self, arr_data):
         """Extracts 3D images from 4D images"""
         if arr_data is not None:
             if len(arr_data.shape) == 3:
+                self._state.set_gui(image_slices=arr_data.shape[2])
                 for slice in range(arr_data.shape[2]):
                     arr_slice = arr_data[:, :, slice].astype(np.float32)
-                    # print(arr_slice.shape)
-                    # im = Image.fromarray(arr_slice)
-
-                    new_file_path = os.path.join(self.static_files, f'{file_name}_{slice}.png')
-                    # print(new_file_path)
-
+                    new_file_path = os.path.join(self.data_folder, f'img_{index}_{slice}.png')
                     plt.imsave(new_file_path, arr_slice, cmap='gray')
-                    # im.save(new_file_path)
-
-                    # self.store[image]['arr'] = self.store[image]['arr'][:, :, :, 0]
 
 
 if __name__ == '__main__':
